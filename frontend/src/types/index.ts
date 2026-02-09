@@ -1,8 +1,11 @@
+export type Priority = 'low' | 'medium' | 'high' | 'critical';
+
 export interface Task {
-  id: string;
+  id: number;  // Backend returns integer IDs
   title: string;
   description: string | null;
   isCompleted: boolean;
+  priority: Priority; // low, medium, high, critical
   createdAt: Date;
   updatedAt: Date;
   scheduledDate: Date | null;

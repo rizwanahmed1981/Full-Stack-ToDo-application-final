@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Task } from '@/types';
+import { Task, Priority } from '@/types';
 import { ValidationService } from '@/services/validation';
 
 interface TaskFormProps {
@@ -10,6 +10,7 @@ export const TaskForm = ({ onCreateTask }: TaskFormProps) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [scheduledDate, setScheduledDate] = useState<string>('');
+  const [priority, setPriority] = useState<Priority>('medium'); // Default to medium
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -25,11 +26,16 @@ export const TaskForm = ({ onCreateTask }: TaskFormProps) => {
     // Clear errors
     setErrors({});
 
+    // Validate priority value
+    const validPriorities = ['low', 'medium', 'high', 'critical'];
+    const selectedPriority = validPriorities.includes(priority) ? priority : 'medium';
+
     // Create the task
     onCreateTask({
       title,
       description: description || null,
       scheduledDate: scheduledDate ? new Date(scheduledDate) : null,
+      priority: selectedPriority as Priority, // Ensure type safety
     });
 
     // Reset form
@@ -53,7 +59,11 @@ export const TaskForm = ({ onCreateTask }: TaskFormProps) => {
               setTitle(e.target.value);
               // Clear error when user starts typing
               if (errors.title) {
-                setErrors(prev => ({ ...prev, title: undefined }));
+                setErrors(prev => {
+                  const newErrors = { ...prev };
+                  delete newErrors.title;
+                  return newErrors;
+                });
               }
             }}
             className={`w-full p-3 border rounded-lg ${
@@ -75,7 +85,11 @@ export const TaskForm = ({ onCreateTask }: TaskFormProps) => {
               setDescription(e.target.value);
               // Clear error when user starts typing
               if (errors.description) {
-                setErrors(prev => ({ ...prev, description: undefined }));
+                setErrors(prev => {
+                  const newErrors = { ...prev };
+                  delete newErrors.description;
+                  return newErrors;
+                });
               }
             }}
             className={`w-full p-3 border rounded-lg ${
@@ -98,6 +112,23 @@ export const TaskForm = ({ onCreateTask }: TaskFormProps) => {
             onChange={(e) => setScheduledDate(e.target.value)}
             className="w-full p-3 border border-gray-300 rounded-lg"
           />
+        </div>
+
+        <div>
+          <label htmlFor="priority" className="block text-sm font-medium text-gray-700 mb-1">
+            Priority
+          </label>
+          <select
+            id="priority"
+            value={priority}
+            onChange={(e) => setPriority(e.target.value as Priority)}
+            className="w-full p-3 border border-gray-300 rounded-lg"
+          >
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+            <option value="critical">Critical</option>
+          </select>
         </div>
       </div>
 

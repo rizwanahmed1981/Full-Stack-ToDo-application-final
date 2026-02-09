@@ -1,7 +1,7 @@
 from sqlmodel import Session, select, func
 from datetime import datetime
 from typing import List, Optional
-from ..models.task import Task, TaskCreate
+from ..models.task import Task, TaskCreate, TaskUpdate, PriorityEnum
 
 
 class TodoService:
@@ -10,13 +10,32 @@ class TodoService:
     def __init__(self, engine):
         self.engine = engine
 
-    def add_task(self, title: str, description: Optional[str] = None) -> Task:
+    def add_task(self, title: str, description: Optional[str] = None, scheduled_date: Optional[datetime] = None, priority: Optional[str] = None) -> Task:
         """Add a new task to the database."""
         if not title or not title.strip():
             raise ValueError("Task title cannot be empty")
 
+        current_time = datetime.utcnow()
+
+        # Validate and convert priority string to enum if provided
+        priority_enum = None
+        if priority is not None and priority != "":
+            try:
+                priority_enum = PriorityEnum(priority)
+            except ValueError:
+                raise ValueError(f"Invalid priority value: {priority}. Must be one of: {list(PriorityEnum)}")
+        else:
+            priority_enum = PriorityEnum.MEDIUM
+
         # Create new task
-        task = Task(title=title.strip(), description=description, created_at=datetime.utcnow())
+        task = Task(
+            title=title.strip(), 
+            description=description, 
+            scheduled_date=scheduled_date,
+            priority=priority_enum,
+            created_at=current_time,
+            updated_at=current_time
+        )
 
         # Save to database
         with Session(self.engine) as session:
@@ -46,21 +65,33 @@ class TodoService:
             task = self.get_task(task_id)
             if task:
                 task.is_completed = not task.is_completed
+                task.updated_at = datetime.utcnow()  # Update timestamp
                 session.add(task)
                 session.commit()
                 session.refresh(task)
                 return task
             return None
 
-    def update_task(self, task_id: int, new_description: str) -> Optional[Task]:
-        """Update a task description."""
-        if not new_description or not new_description.strip():
+    def update_task(self, task_id: int, new_description: str = None, new_scheduled_date: Optional[datetime] = None, new_priority: Optional[str] = None) -> Optional[Task]:
+        """Update a task description and/or scheduled date and/or priority."""
+        if new_description is not None and (not new_description or not new_description.strip()):
             raise ValueError("Task description cannot be empty")
 
         with Session(self.engine) as session:
             task = self.get_task(task_id)
             if task:
-                task.description = new_description.strip()
+                if new_description is not None:
+                    task.description = new_description.strip()
+                if new_scheduled_date is not None:
+                    task.scheduled_date = new_scheduled_date
+                if new_priority is not None:
+                    # Validate and convert priority string to enum
+                    try:
+                        validated_priority = PriorityEnum(new_priority)
+                        task.priority = validated_priority
+                    except ValueError:
+                        raise ValueError(f"Invalid priority value: {new_priority}. Must be one of: {list(PriorityEnum)}")
+                task.updated_at = datetime.utcnow()  # Update timestamp
                 session.add(task)
                 session.commit()
                 session.refresh(task)
