@@ -1,4 +1,4 @@
-# Claude Code Rules
+# Qwen Code Rules
 
 This file is generated during init for the selected agent.
 
@@ -208,10 +208,3 @@ Wait for consent; never auto-create ADRs. Group related decisions (stacks, authe
 
 ## Code Standards
 See `.specify/memory/constitution.md` for code quality, testing, performance, security, and architecture principles.
-
-## Active Technologies
-- Python 3.14+ (per constitution requirement) + typer (CLI framework), rich (for formatted tables and colorful text) (001-cli-todo-app)
-- In-memory list (Phase 1 requirement - no persistent storage) (001-cli-todo-app)
-
-## Recent Changes
-- 001-cli-todo-app: Added Python 3.14+ (per constitution requirement) + typer (CLI framework), rich (for formatted tables and colorful text)

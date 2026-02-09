@@ -1,0 +1,31 @@
+# Speckit Plus Constitution
+
+## Core Principles
+
+### I. Python Version Standard
+Python 3.14+ must be used for all project operations; No older Python versions permitted; Ensures access to latest language features and security updates.
+
+### II. Package Management with uv
+Use `uv` for ALL Python operations; Never use raw `pip` directly; Ensures consistent, fast, and reliable dependency management across all environments.
+
+### III. Project Structure Standards
+Project root must contain specs/ folder for specifications, src/ for source code, and tests/ for testing logic; Clear separation of concerns required; Maintains organized and navigable codebase.
+
+### IV. Tooling Requirements
+Use `uv init` to start new Python projects and `uv add` for all dependency additions; Standardizes project initialization and dependency management workflows; Ensures consistency across team members.
+
+## Additional Constraints
+- All Python dependencies must be managed through `uv`
+- Project structure must follow the src/tests/specs organization
+- Python 3.14+ is the minimum required version for all environments
+
+## Development Workflow
+- Initialize projects with `uv init`
+- Add dependencies with `uv add`
+- Follow the established project structure conventions
+- Maintain consistency with the specified tooling approach
+
+## Governance
+Constitution supersedes all other practices; Amendments require documentation, approval, migration plan; All PRs/reviews must verify compliance with Python version, package manager, and project structure requirements.
+
+**Version**: 1.0.0 | **Ratified**: 2026-01-03 | **Last Amended**: 2026-01-03
