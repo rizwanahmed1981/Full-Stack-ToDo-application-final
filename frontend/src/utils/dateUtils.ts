@@ -105,3 +105,22 @@ export const getDaysInWeek = (date: Date): Date[] => {
 export const parseDateFromString = (dateString: string): Date => {
   return new Date(dateString);
 };
+
+/**
+ * Safely parses a date value, handling various input types
+ * @param dateValue The date value to parse (can be Date object, ISO string, or null/undefined)
+ * @returns A valid Date object
+ */
+export const safeParseDate = (dateValue: any): Date => {
+  if (!dateValue) return new Date();
+  if (dateValue instanceof Date) return dateValue;
+  if (typeof dateValue === 'string') {
+    const parsed = new Date(dateValue);
+    return isNaN(parsed.getTime()) ? new Date() : parsed;
+  }
+  if (typeof dateValue === 'number') {
+    // Timestamp
+    return new Date(dateValue);
+  }
+  return new Date(dateValue);
+};

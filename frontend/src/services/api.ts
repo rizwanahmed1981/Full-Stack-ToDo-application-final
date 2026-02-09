@@ -1,3 +1,5 @@
+import { safeParseDate } from '@/utils/dateUtils';
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
 
 export interface ApiResponse<T> {
@@ -16,11 +18,30 @@ export class ApiService {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      const data = await response.json();
-      return { data };
+      const rawData = await response.json();
+      
+      // Transform the raw data to match frontend expectations
+      const transformedData = {
+        tasks: rawData.map((task: any) => ({
+          ...task,
+          // Convert snake_case to camelCase and string IDs to numbers
+          id: Number(task.id),
+          isCompleted: task.is_completed,  // Convert snake_case to camelCase
+          priority: task.priority && ['low', 'medium', 'high', 'critical'].includes(task.priority) 
+          ? task.priority 
+          : 'medium', // Default to medium if not provided or invalid
+          createdAt: safeParseDate(task.created_at),  // Convert snake_case to camelCase
+          // Use created_at as fallback for updatedAt if not present
+          updatedAt: safeParseDate(task.updated_at || task.created_at),
+          // Convert scheduled_date to scheduledDate if present
+          scheduledDate: task.scheduled_date ? safeParseDate(task.scheduled_date) : null
+        }))
+      };
+      
+      return { data: transformedData };
     } catch (error: any) {
       return {
-        data: [],
+        data: { tasks: [] },
         error: {
           code: 'FETCH_ERROR',
           message: error.message || 'Failed to fetch tasks',
@@ -42,8 +63,25 @@ export class ApiService {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      const data = await response.json();
-      return { data };
+      const rawData = await response.json();
+
+      // Transform the raw data to match frontend expectations
+      const transformedData = {
+        ...rawData,
+        // Convert snake_case to camelCase and string ID to number
+        id: Number(rawData.id),
+        isCompleted: rawData.is_completed,  // Convert snake_case to camelCase
+        priority: rawData.priority && ['low', 'medium', 'high', 'critical'].includes(rawData.priority) 
+          ? rawData.priority 
+          : 'medium', // Default to medium if not provided or invalid
+        createdAt: safeParseDate(rawData.created_at),  // Convert snake_case to camelCase
+        // Use created_at as fallback for updatedAt if not present
+        updatedAt: safeParseDate(rawData.updated_at || rawData.created_at),
+        // Convert scheduled_date to scheduledDate if present
+        scheduledDate: rawData.scheduled_date ? safeParseDate(rawData.scheduled_date) : null
+      };
+
+      return { data: transformedData };
     } catch (error: any) {
       return {
         data: {} as any,
@@ -68,8 +106,25 @@ export class ApiService {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      const data = await response.json();
-      return { data };
+      const rawData = await response.json();
+
+      // Transform the raw data to match frontend expectations
+      const transformedData = {
+        ...rawData,
+        // Convert snake_case to camelCase and string ID to number
+        id: Number(rawData.id),
+        isCompleted: rawData.is_completed,  // Convert snake_case to camelCase
+        priority: rawData.priority && ['low', 'medium', 'high', 'critical'].includes(rawData.priority) 
+          ? rawData.priority 
+          : 'medium', // Default to medium if not provided or invalid
+        createdAt: safeParseDate(rawData.created_at),  // Convert snake_case to camelCase
+        // Use created_at as fallback for updatedAt if not present
+        updatedAt: safeParseDate(rawData.updated_at || rawData.created_at),
+        // Convert scheduled_date to scheduledDate if present
+        scheduledDate: rawData.scheduled_date ? safeParseDate(rawData.scheduled_date) : null
+      };
+
+      return { data: transformedData };
     } catch (error: any) {
       return {
         data: {} as any,
@@ -89,13 +144,29 @@ export class ApiService {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ isCompleted: true }), // This would need to be dynamic based on current state
       });
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      const data = await response.json();
-      return { data };
+      const rawData = await response.json();
+
+      // Transform the raw data to match frontend expectations
+      const transformedData = {
+        ...rawData,
+        // Convert snake_case to camelCase and string ID to number
+        id: Number(rawData.id),
+        isCompleted: rawData.is_completed,  // Convert snake_case to camelCase
+        priority: rawData.priority && ['low', 'medium', 'high', 'critical'].includes(rawData.priority) 
+          ? rawData.priority 
+          : 'medium', // Default to medium if not provided or invalid
+        createdAt: safeParseDate(rawData.created_at),  // Convert snake_case to camelCase
+        // Use created_at as fallback for updatedAt if not present
+        updatedAt: safeParseDate(rawData.updated_at || rawData.created_at),
+        // Convert scheduled_date to scheduledDate if present
+        scheduledDate: rawData.scheduled_date ? safeParseDate(rawData.scheduled_date) : null
+      };
+
+      return { data: transformedData };
     } catch (error: any) {
       return {
         data: {} as any,
@@ -116,7 +187,8 @@ export class ApiService {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      return { data: {} };
+      // Return success response for deletion
+      return { data: { success: true, message: 'Task deleted successfully' } };
     } catch (error: any) {
       return {
         data: {},
@@ -131,14 +203,10 @@ export class ApiService {
 
   static async getCalendarTasks(startDate: Date, endDate: Date): Promise<ApiResponse<any>> {
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/v1/tasks/calendar?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`
-      );
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      return { data };
+      // For now, just return all tasks since the backend doesn't have date filtering
+      // In a real implementation, the backend would have a specific endpoint for calendar tasks
+      const response = await this.getTasks();
+      return response;
     } catch (error: any) {
       return {
         data: {},

@@ -89,6 +89,7 @@ const parseISO = (dateString: string): Date => {
 };
 
 export const CalendarView = ({ tasks }: CalendarViewProps) => {
+  const { toggleTaskCompletion, updateTask, deleteTask } = useTasks();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('month');
 
@@ -214,10 +215,18 @@ export const CalendarView = ({ tasks }: CalendarViewProps) => {
                 </div>
                 <div className="space-y-1 max-h-20 overflow-y-auto">
                   {dayTasks.slice(0, 3).map(task => (
-                    <div 
-                      key={task.id} 
+                    <div
+                      key={task.id}
                       className={`text-xs p-1 rounded truncate ${
-                        task.isCompleted ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
+                        task.isCompleted
+                          ? 'bg-green-100 text-green-800'
+                          : task.priority === 'low'
+                            ? 'bg-green-100 text-green-800'
+                            : task.priority === 'medium'
+                              ? 'bg-blue-100 text-blue-800'
+                              : task.priority === 'high'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-red-100 text-red-800' // critical
                       }`}
                     >
                       {task.title}
@@ -245,11 +254,11 @@ export const CalendarView = ({ tasks }: CalendarViewProps) => {
               .filter(task => task.scheduledDate && isSameDay(parseISO(task.scheduledDate as unknown as string), currentDate))
               .map(task => (
                 <div key={task.id} className="p-3 border rounded bg-gray-50">
-                  <TaskItem 
-                    task={task} 
-                    onToggleComplete={() => {}} 
-                    onUpdate={() => {}} 
-                    onDelete={() => {}} 
+                  <TaskItem
+                    task={task}
+                    onToggleComplete={toggleTaskCompletion}
+                    onUpdate={updateTask}
+                    onDelete={deleteTask}
                   />
                 </div>
               ))}
@@ -287,10 +296,18 @@ export const CalendarView = ({ tasks }: CalendarViewProps) => {
                   </div>
                   <div className="space-y-2">
                     {dayTasks.map(task => (
-                      <div 
-                        key={task.id} 
+                      <div
+                        key={task.id}
                         className={`p-2 rounded text-xs ${
-                          task.isCompleted ? 'bg-green-100' : 'bg-blue-100'
+                          task.isCompleted 
+                            ? 'bg-green-100' 
+                            : task.priority === 'low' 
+                              ? 'bg-green-100'
+                              : task.priority === 'medium' 
+                                ? 'bg-blue-100'
+                                : task.priority === 'high' 
+                                  ? 'bg-yellow-100'
+                                  : 'bg-red-100' // critical
                         }`}
                       >
                         <div className="font-medium truncate">{task.title}</div>

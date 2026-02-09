@@ -45,6 +45,7 @@ export const useTasks = () => {
       if (!response.error) {
         setTasks(response.data.tasks);
         await CacheService.setAllTasks(response.data.tasks);
+        setError(null); // Reset error after successful operation
       } else {
         setError(response.error.message);
       }
@@ -60,9 +61,19 @@ export const useTasks = () => {
       setLoading(true);
       const response = await ApiService.createTask(taskData);
       if (!response.error) {
-        const newTask = response.data;
-        setTasks(prev => [newTask, ...prev]);
-        await CacheService.setAllTasks([newTask, ...tasks]);
+        const newTask = response.data as Task;
+        setTasks(prev => {
+          const updatedTasks = [newTask, ...prev];
+          // Update cache with error handling
+          try {
+            CacheService.setAllTasks(updatedTasks); // Update cache with the same data as state
+          } catch (cacheError) {
+            console.error('Failed to update cache after creating task:', cacheError);
+            // Don't throw the error as it shouldn't affect the main operation
+          }
+          return updatedTasks;
+        });
+        setError(null); // Reset error after successful operation
         return newTask;
       } else {
         setError(response.error.message);
@@ -76,14 +87,39 @@ export const useTasks = () => {
     }
   };
 
-  const updateTask = async (id: string, taskData: Partial<Omit<Task, 'id' | 'createdAt' | 'updatedAt'>>) => {
+  const updateTask = async (id: number, taskData: Partial<Omit<Task, 'id' | 'createdAt' | 'updatedAt'>>) => {
     try {
       setLoading(true);
-      const response = await ApiService.updateTask(id, taskData);
+      // Prepare the data to send to the API
+      const apiData: any = {};
+      if (taskData.description !== undefined) {
+        apiData.description = taskData.description;
+      }
+      if (taskData.scheduledDate !== undefined) {
+        apiData.scheduled_date = taskData.scheduledDate;
+      }
+      if (taskData.priority !== undefined) {
+        // Validate priority value before sending
+        if (['low', 'medium', 'high', 'critical'].includes(taskData.priority)) {
+          apiData.priority = taskData.priority;
+        }
+      }
+      
+      const response = await ApiService.updateTask(id.toString(), apiData);
       if (!response.error) {
         const updatedTask = response.data;
-        setTasks(prev => prev.map(task => task.id === id ? updatedTask : task));
-        await CacheService.setAllTasks(tasks.map(task => task.id === id ? updatedTask : task));
+        setTasks(prev => {
+          const updatedTasks = prev.map(task => task.id === id ? updatedTask : task);
+          // Update cache with error handling
+          try {
+            CacheService.setAllTasks(updatedTasks); // Update cache with the same data as state
+          } catch (cacheError) {
+            console.error('Failed to update cache after updating task:', cacheError);
+            // Don't throw the error as it shouldn't affect the main operation
+          }
+          return updatedTasks;
+        });
+        setError(null); // Reset error after successful operation
         return updatedTask;
       } else {
         setError(response.error.message);
@@ -97,14 +133,24 @@ export const useTasks = () => {
     }
   };
 
-  const toggleTaskCompletion = async (id: string) => {
+  const toggleTaskCompletion = async (id: number) => {
     try {
       setLoading(true);
-      const response = await ApiService.toggleTaskCompletion(id);
+      const response = await ApiService.toggleTaskCompletion(id.toString());
       if (!response.error) {
         const updatedTask = response.data;
-        setTasks(prev => prev.map(task => task.id === id ? updatedTask : task));
-        await CacheService.setAllTasks(tasks.map(task => task.id === id ? updatedTask : task));
+        setTasks(prev => {
+          const updatedTasks = prev.map(task => task.id === id ? updatedTask : task);
+          // Update cache with error handling
+          try {
+            CacheService.setAllTasks(updatedTasks); // Update cache with the same data as state
+          } catch (cacheError) {
+            console.error('Failed to update cache after toggling task completion:', cacheError);
+            // Don't throw the error as it shouldn't affect the main operation
+          }
+          return updatedTasks;
+        });
+        setError(null); // Reset error after successful operation
         return updatedTask;
       } else {
         setError(response.error.message);
@@ -118,13 +164,23 @@ export const useTasks = () => {
     }
   };
 
-  const deleteTask = async (id: string) => {
+  const deleteTask = async (id: number) => {
     try {
       setLoading(true);
-      const response = await ApiService.deleteTask(id);
+      const response = await ApiService.deleteTask(id.toString());
       if (!response.error) {
-        setTasks(prev => prev.filter(task => task.id !== id));
-        await CacheService.setAllTasks(tasks.filter(task => task.id !== id));
+        setTasks(prev => {
+          const updatedTasks = prev.filter(task => task.id !== id);
+          // Update cache with error handling
+          try {
+            CacheService.setAllTasks(updatedTasks); // Update cache with the same data as state
+          } catch (cacheError) {
+            console.error('Failed to update cache after deleting task:', cacheError);
+            // Don't throw the error as it shouldn't affect the main operation
+          }
+          return updatedTasks;
+        });
+        setError(null); // Reset error after successful operation
         return true;
       } else {
         setError(response.error.message);
