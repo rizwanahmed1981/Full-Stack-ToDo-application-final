@@ -6,6 +6,7 @@ if backend_src_dir not in sys.path:
     sys.path.insert(0, backend_src_dir)
 
 from fastapi import FastAPI, HTTPException, Depends, Request
+from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import create_engine, Session, select, SQLModel
 from typing import List
 import logging
@@ -24,6 +25,15 @@ load_dotenv()
 
 # Initialize FastAPI app
 app = FastAPI(title="Todo App API", version="0.1.0")
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In production, replace with specific origins
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Add middleware for logging requests
 @app.middleware("http")
@@ -85,7 +95,7 @@ async def read_tasks():
 async def create_task(task: TaskCreate):
     """Create a new task."""
     try:
-        db_task = todo_service.add_task(task.title, task.description)
+        db_task = todo_service.add_task(task.title, task.description, task.scheduled_date, task.priority)
         logger.info(f"Created task with ID: {db_task.id}")
         return db_task
     except ValueError as e:
@@ -116,12 +126,11 @@ async def toggle_task_completion(task_id: int):
 async def update_task(task_id: int, task_update: TaskUpdate):
     """Update a task."""
     try:
-        # Using the description from task_update for now, as the service only supports description updates
-        db_task = todo_service.update_task(task_id, task_update.description)
+        db_task = todo_service.update_task(task_id, task_update.description, task_update.scheduled_date, task_update.priority)
         if not db_task:
             logger.warning(f"Attempt to update non-existent task with ID: {task_id}")
             raise HTTPException(status_code=404, detail="Task not found")
-        
+
         logger.info(f"Updated task with ID: {task_id}")
         return db_task
     except ValueError as e:
@@ -152,4 +161,4 @@ async def delete_task(task_id: int):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="127.0.0.1", port=8001)
