@@ -1,0 +1,114 @@
+import { useState } from 'react';
+import { Task } from '@/types';
+import { ValidationService } from '@/services/validation';
+
+interface TaskFormProps {
+  onCreateTask: (taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'isCompleted'>) => void;
+}
+
+export const TaskForm = ({ onCreateTask }: TaskFormProps) => {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [scheduledDate, setScheduledDate] = useState<string>('');
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Validate the task
+    const validation = ValidationService.validateTask({ title, description });
+    if (!validation.isValid) {
+      setErrors(validation.errors);
+      return;
+    }
+
+    // Clear errors
+    setErrors({});
+
+    // Create the task
+    onCreateTask({
+      title,
+      description: description || null,
+      scheduledDate: scheduledDate ? new Date(scheduledDate) : null,
+    });
+
+    // Reset form
+    setTitle('');
+    setDescription('');
+    setScheduledDate('');
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="md:col-span-2">
+          <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+            Title *
+          </label>
+          <input
+            type="text"
+            id="title"
+            value={title}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              // Clear error when user starts typing
+              if (errors.title) {
+                setErrors(prev => ({ ...prev, title: undefined }));
+              }
+            }}
+            className={`w-full p-3 border rounded-lg ${
+              errors.title ? 'border-red-500' : 'border-gray-300'
+            }`}
+            placeholder="What needs to be done?"
+          />
+          {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title}</p>}
+        </div>
+
+        <div className="md:col-span-2">
+          <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+            Description
+          </label>
+          <textarea
+            id="description"
+            value={description}
+            onChange={(e) => {
+              setDescription(e.target.value);
+              // Clear error when user starts typing
+              if (errors.description) {
+                setErrors(prev => ({ ...prev, description: undefined }));
+              }
+            }}
+            className={`w-full p-3 border rounded-lg ${
+              errors.description ? 'border-red-500' : 'border-gray-300'
+            }`}
+            placeholder="Add details..."
+            rows={3}
+          />
+          {errors.description && <p className="mt-1 text-sm text-red-600">{errors.description}</p>}
+        </div>
+
+        <div>
+          <label htmlFor="scheduledDate" className="block text-sm font-medium text-gray-700 mb-1">
+            Scheduled Date
+          </label>
+          <input
+            type="date"
+            id="scheduledDate"
+            value={scheduledDate}
+            onChange={(e) => setScheduledDate(e.target.value)}
+            className="w-full p-3 border border-gray-300 rounded-lg"
+          />
+        </div>
+      </div>
+
+      <div className="mt-6">
+        <button
+          type="submit"
+          className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 px-4 rounded-lg transition duration-200"
+        >
+          Add Task
+        </button>
+      </div>
+    </form>
+  );
+};
