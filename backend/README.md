@@ -10,6 +10,9 @@ Backend API for the Todo application built with FastAPI and SQLModel.
 - Full CRUD operations for tasks
 - Environment-based configuration
 - Automatic table creation on startup
+- Search tasks by keyword in title and description
+- Filter tasks by status (active/completed), priority (low, medium, high, critical), or date range
+- Combined search and filter functionality
 
 ## Setup
 
@@ -37,11 +40,13 @@ uvicorn src.todo_app.main:app --reload --host 0.0.0.0 --port 8000
 
 ## API Endpoints
 
-- `GET /tasks` - Get all tasks
+- `GET /tasks` - Get all tasks (with optional filtering by status, priority, or date)
 - `POST /tasks` - Create a new task
-- `PATCH /tasks/{id}` - Toggle task completion
+- `GET /tasks/{id}` - Get a specific task
 - `PUT /tasks/{id}` - Update a task
+- `PATCH /tasks/{id}` - Toggle task completion
 - `DELETE /tasks/{id}` - Delete a task
+- `GET /tasks/search` - Search and filter tasks by keyword, status, priority, or date range
 - `GET /health` - Health check endpoint
 
 ## Database

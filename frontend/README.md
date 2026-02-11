@@ -8,6 +8,10 @@ Frontend application for the Todo application built with Next.js.
 - Responsive design
 - Real-time task management
 - Integration with backend API
+- Search tasks by keyword in title and description
+- Filter tasks by status (active/completed), priority (low, medium, high, critical), or date range
+- Combined search and filter functionality
+- Debounced search input for optimal performance
 
 ## Setup
 

@@ -218,4 +218,67 @@ export class ApiService {
       };
     }
   }
+
+  static async searchTasks(searchParams: {
+    q?: string;
+    status?: string;
+    priority?: string;
+    start_date?: string;
+    end_date?: string;
+  }): Promise<ApiResponse<any>> {
+    try {
+      // Build query parameters
+      const params = new URLSearchParams();
+      if (searchParams.q) params.append('q', searchParams.q);
+      if (searchParams.status) params.append('status', searchParams.status);
+      if (searchParams.priority) params.append('priority', searchParams.priority);
+      if (searchParams.start_date) params.append('start_date', searchParams.start_date);
+      if (searchParams.end_date) params.append('end_date', searchParams.end_date);
+
+      const queryString = params.toString();
+      const url = queryString ? `${API_BASE_URL}/api/v1/tasks/search?${queryString}` : `${API_BASE_URL}/api/v1/tasks/search`;
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const rawData = await response.json();
+
+      // Transform the raw data to match frontend expectations
+      const transformedData = {
+        tasks: rawData.map((task: any) => ({
+          ...task,
+          // Convert snake_case to camelCase and string IDs to numbers
+          id: Number(task.id),
+          isCompleted: task.is_completed,  // Convert snake_case to camelCase
+          priority: task.priority && ['low', 'medium', 'high', 'critical'].includes(task.priority)
+          ? task.priority
+          : 'medium', // Default to medium if not provided or invalid
+          createdAt: safeParseDate(task.created_at),  // Convert snake_case to camelCase
+          // Use created_at as fallback for updatedAt if not present
+          updatedAt: safeParseDate(task.updated_at || task.created_at),
+          // Convert scheduled_date to scheduledDate if present
+          scheduledDate: task.scheduled_date ? safeParseDate(task.scheduled_date) : null
+        }))
+      };
+
+      return { data: transformedData };
+    } catch (error: any) {
+      return {
+        data: { tasks: [] },
+        error: {
+          code: 'SEARCH_ERROR',
+          message: error.message || 'Failed to search tasks',
+          details: error
+        }
+      };
+    }
+  }
 }

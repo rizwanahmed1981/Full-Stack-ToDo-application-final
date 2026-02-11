@@ -3,36 +3,19 @@
 import { useState } from 'react';
 import { TaskList } from '@/components/TaskList';
 import { CalendarView } from '@/components/CalendarView';
-import { SearchBar } from '@/components/SearchBar';
 import { useTasks } from '@/hooks/useTasks';
 import { Task } from '@/types';
 
 export default function HomePage() {
   const { tasks } = useTasks();
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
-  const [searchResults, setSearchResults] = useState<Task[] | null>(null);
-
-  const handleSearchResults = (results: Task[]) => {
-    setSearchResults(results);
-  };
-
-  const handleClearSearch = () => {
-    setSearchResults(null);
-  };
-
-  // Use search results if available, otherwise use all tasks
-  const displayTasks = searchResults !== null ? searchResults : tasks;
 
   return (
     <div className="container mx-auto py-10">
       <h1 className="text-3xl font-bold text-center mb-8">Todo App</h1>
 
       <div className="max-w-2xl mx-auto mb-6">
-        <SearchBar 
-          tasks={tasks} 
-          onSearchResults={handleSearchResults} 
-          onClear={handleClearSearch} 
-        />
+        <TaskList />
       </div>
 
       <div className="mb-6 flex justify-center space-x-4">
@@ -59,9 +42,9 @@ export default function HomePage() {
       </div>
 
       {viewMode === 'list' ? (
-        <TaskList tasks={displayTasks} />
+        <TaskList />
       ) : (
-        <CalendarView tasks={displayTasks} />
+        <CalendarView tasks={tasks} />
       )}
     </div>
   );

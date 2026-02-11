@@ -45,3 +45,12 @@ class TaskPublic(TaskBase):
     created_at: datetime
     updated_at: datetime
     scheduled_date: Optional[datetime] = None
+
+
+class SearchQuery(SQLModel):
+    """Model representing search parameters for querying tasks."""
+    keyword: Optional[str] = None
+    status: Optional[str] = None
+    priority: Optional[str] = None
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None

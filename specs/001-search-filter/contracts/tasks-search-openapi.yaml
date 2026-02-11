@@ -1,0 +1,99 @@
+# API Contracts: Search & Filter for Todo App
+
+## Overview
+This document defines the API contracts for search and filter functionality in the todo app.
+
+## Endpoints
+
+### Search Tasks
+**Endpoint**: `GET /api/v1/tasks/search`
+
+**Description**: Search tasks by keyword and apply filters
+
+**Request Parameters**:
+- `q` (optional): Search keyword to match in title or description
+- `status` (optional): Filter by completion status (values: "all", "active", "completed")
+- `priority` (optional): Filter by priority level (values: "all", "low", "medium", "high", "critical")
+- `start_date` (optional): Filter by scheduled date range start (format: YYYY-MM-DD)
+- `end_date` (optional): Filter by scheduled date range end (format: YYYY-MM-DD)
+
+**Request Example**:
+```
+GET /api/v1/tasks/search?q=meeting&status=active&priority=high&start_date=2026-01-01&end_date=2026-12-31
+```
+
+**Response**:
+- Status: 200 OK
+- Body: Array of Task objects matching the search criteria
+
+**Response Example**:
+```json
+[
+  {
+    "id": 1,
+    "title": "Team meeting",
+    "description": "Weekly team sync",
+    "is_completed": false,
+    "priority": "high",
+    "created_at": "2026-02-12T10:00:00Z",
+    "updated_at": "2026-02-12T10:00:00Z",
+    "scheduled_date": "2026-02-12T14:00:00Z"
+  }
+]
+```
+
+### Get All Tasks (Enhanced)
+**Endpoint**: `GET /api/v1/tasks`
+
+**Description**: Retrieve all tasks with optional filtering (backward compatible)
+
+**Request Parameters**:
+- `status` (optional): Filter by completion status (values: "all", "active", "completed")
+- `priority` (optional): Filter by priority level (values: "all", "low", "medium", "high", "critical")
+- `start_date` (optional): Filter by scheduled date range start (format: YYYY-MM-DD)
+- `end_date` (optional): Filter by scheduled date range end (format: YYYY-MM-DD)
+
+**Response**:
+- Status: 200 OK
+- Body: Array of Task objects matching the filter criteria
+
+**Response Example**:
+```json
+[
+  {
+    "id": 1,
+    "title": "Team meeting",
+    "description": "Weekly team sync",
+    "is_completed": false,
+    "priority": "high",
+    "created_at": "2026-02-12T10:00:00Z",
+    "updated_at": "2026-02-12T10:00:00Z",
+    "scheduled_date": "2026-02-12T14:00:00Z"
+  }
+]
+```
+
+## Error Responses
+
+### Common Error Formats
+
+**400 Bad Request**:
+```json
+{
+  "detail": "Invalid request parameters"
+}
+```
+
+**404 Not Found**:
+```json
+{
+  "detail": "Task not found"
+}
+```
+
+**500 Internal Server Error**:
+```json
+{
+  "detail": "Internal server error"
+}
+```

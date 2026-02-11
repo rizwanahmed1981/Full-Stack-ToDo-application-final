@@ -1,7 +1,7 @@
-from sqlmodel import Session, select, func
+from sqlmodel import Session, select, func, or_
 from datetime import datetime
 from typing import List, Optional
-from ..models.task import Task, TaskCreate, TaskUpdate, PriorityEnum
+from ..models.task import Task, TaskCreate, TaskUpdate, PriorityEnum, SearchQuery
 
 
 class TodoService:
@@ -128,3 +128,41 @@ class TodoService:
             statement = select(func.count(Task.id))
             result = session.execute(statement)
             return result.scalar_one()
+
+    def search_tasks(self, search_query: SearchQuery) -> List[Task]:
+        """Search and filter tasks based on the provided search query."""
+        with Session(self.engine) as session:
+            statement = select(Task)
+            
+            # Apply keyword search to title and description
+            if search_query.keyword:
+                keyword_filter = f"%{search_query.keyword}%"
+                statement = statement.where(
+                    or_(
+                        Task.title.ilike(keyword_filter),
+                        Task.description.ilike(keyword_filter) if Task.description is not None else False
+                    )
+                )
+            
+            # Apply status filter
+            if search_query.status:
+                if search_query.status.lower() == 'active':
+                    statement = statement.where(Task.is_completed == False)
+                elif search_query.status.lower() == 'completed':
+                    statement = statement.where(Task.is_completed == True)
+            
+            # Apply priority filter
+            if search_query.priority and search_query.priority.lower() != 'all':
+                statement = statement.where(Task.priority == search_query.priority.lower())
+            
+            # Apply date range filter
+            if search_query.start_date:
+                statement = statement.where(Task.scheduled_date >= search_query.start_date)
+            if search_query.end_date:
+                statement = statement.where(Task.scheduled_date <= search_query.end_date)
+            
+            # Order by creation date (newest first)
+            statement = statement.order_by(Task.created_at.desc())
+            
+            result = session.execute(statement)
+            return result.scalars().all()

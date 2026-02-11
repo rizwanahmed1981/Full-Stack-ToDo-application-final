@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Task } from '@/types';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Task, SearchQuery, StatusFilter } from '@/types';
 
 interface SearchBarProps {
   tasks: Task[];
@@ -9,67 +9,141 @@ interface SearchBarProps {
 
 export const SearchBar = ({ tasks, onSearchResults, onClear }: SearchBarProps) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [priorityFilter, setPriorityFilter] = useState<'all' | 'low' | 'medium' | 'high' | 'critical'>('all');
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const term = e.target.value;
-    setSearchTerm(term);
+  // Debounced search function
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300); // 300ms debounce delay
 
-    if (term.trim() === '') {
-      onClear();
-      return;
+    // Cleanup function to clear the timeout
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Memoize the filtered tasks to prevent unnecessary recalculations
+  const filteredTasks = useMemo(() => {
+    let result = [...tasks];
+
+    // Apply search term
+    if (debouncedSearchTerm) {
+      const term = debouncedSearchTerm.toLowerCase();
+      result = result.filter(task => 
+        task.title.toLowerCase().includes(term) || 
+        (task.description && task.description.toLowerCase().includes(term))
+      );
     }
 
-    // Try to parse as number to check if it's an ID
-    const numericId = parseInt(term, 10);
-    const isNumericId = !isNaN(numericId);
-
-    // Filter tasks based on search term
-    const results = tasks.filter(task => {
-      // Check if it matches the ID
-      if (isNumericId && task.id === numericId) {
-        return true;
-      }
-      
-      // Check if it matches title or description (case insensitive)
-      return (
-        task.title.toLowerCase().includes(term.toLowerCase()) ||
-        (task.description && task.description.toLowerCase().includes(term.toLowerCase()))
+    // Apply status filter
+    if (statusFilter !== 'all') {
+      result = result.filter(task => 
+        statusFilter === 'active' ? !task.isCompleted : task.isCompleted
       );
-    });
+    }
 
-    onSearchResults(results);
-  };
+    // Apply priority filter
+    if (priorityFilter !== 'all') {
+      result = result.filter(task => task.priority === priorityFilter);
+    }
 
-  const clearSearch = () => {
+    // Apply date range filter
+    if (startDate) {
+      const start = new Date(startDate);
+      result = result.filter(task => 
+        task.scheduledDate && new Date(task.scheduledDate) >= start
+      );
+    }
+
+    if (endDate) {
+      const end = new Date(endDate);
+      result = result.filter(task => 
+        task.scheduledDate && new Date(task.scheduledDate) <= end
+      );
+    }
+
+    return result;
+  }, [debouncedSearchTerm, statusFilter, priorityFilter, startDate, endDate, tasks]);
+
+  // Send the filtered results to parent component
+  useEffect(() => {
+    onSearchResults(filteredTasks);
+  }, [filteredTasks, onSearchResults]); // Only re-run when filteredTasks changes
+
+  const handleClearFilters = () => {
     setSearchTerm('');
+    setStatusFilter('all');
+    setPriorityFilter('all');
+    setStartDate('');
+    setEndDate('');
     onClear();
   };
 
   return (
     <div className="relative">
-      <div className="relative">
+      <div className="flex flex-col sm:flex-row gap-2">
+        {/* Search input */}
         <input
           type="text"
+          placeholder="Search tasks..."
           value={searchTerm}
-          onChange={handleSearch}
-          placeholder="Search tasks by keyword or ID..."
-          className="w-full p-3 pl-10 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
-        <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-        </div>
-        {searchTerm && (
-          <button
-            onClick={clearSearch}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        )}
+
+        {/* Status filter */}
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+          className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        >
+          <option value="all">All Status</option>
+          <option value="active">Active</option>
+          <option value="completed">Completed</option>
+        </select>
+
+        {/* Priority filter */}
+        <select
+          value={priorityFilter}
+          onChange={(e) => setPriorityFilter(e.target.value as any)}
+          className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        >
+          <option value="all">All Priorities</option>
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+          <option value="critical">Critical</option>
+        </select>
+
+        {/* Start date filter */}
+        <input
+          type="date"
+          value={startDate}
+          onChange={(e) => setStartDate(e.target.value)}
+          className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          placeholder="Start date"
+        />
+
+        {/* End date filter */}
+        <input
+          type="date"
+          value={endDate}
+          onChange={(e) => setEndDate(e.target.value)}
+          className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          placeholder="End date"
+        />
+
+        {/* Clear filters button */}
+        <button
+          onClick={handleClearFilters}
+          className="px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+        >
+          Clear
+        </button>
       </div>
     </div>
   );

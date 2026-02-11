@@ -208,3 +208,10 @@ Wait for consent; never auto-create ADRs. Group related decisions (stacks, authe
 
 ## Code Standards
 See `.specify/memory/constitution.md` for code quality, testing, performance, security, and architecture principles.
+
+## Active Technologies
+- Python 3.12, TypeScript 5.3, JavaScript ES2022 + FastAPI (backend), Next.js 14+ (frontend), SQLModel, React 18 (001-search-filter)
+- PostgreSQL (primary), with SQLite fallback for development (001-search-filter)
+
+## Recent Changes
+- 001-search-filter: Added Python 3.12, TypeScript 5.3, JavaScript ES2022 + FastAPI (backend), Next.js 14+ (frontend), SQLModel, React 18

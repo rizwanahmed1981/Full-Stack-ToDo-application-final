@@ -11,7 +11,7 @@ def validate_crud_operations():
     print("🔍 VALIDATING CRUD OPERATIONS")
     print("-" * 40)
     
-    BASE_URL = "http://localhost:8001"
+    BASE_URL = "http://localhost:8000"
     HEADERS = {"Content-Type": "application/json"}
     
     # 1. CREATE operation
@@ -97,7 +97,7 @@ def validate_frontend_backend_communication():
     print("\n🌐 VALIDATING FRONTEND-BACKEND COMMUNICATION")
     print("-" * 40)
     
-    BASE_URL = "http://localhost:8001"
+    BASE_URL = "http://localhost:8000"
     HEADERS = {"Content-Type": "application/json"}
     
     # Test that the API endpoints match what the frontend expects
@@ -156,7 +156,7 @@ def validate_data_transformations():
     print("\n🔄 VALIDATING DATA TRANSFORMATIONS")
     print("-" * 40)
     
-    BASE_URL = "http://localhost:8001"
+    BASE_URL = "http://localhost:8000"
     HEADERS = {"Content-Type": "application/json"}
     
     # Create a task and check the transformation compatibility
@@ -210,7 +210,7 @@ def validate_application_readiness():
     print("\n🚀 VALIDATING APPLICATION READINESS")
     print("-" * 40)
     
-    BASE_URL = "http://localhost:8001"
+    BASE_URL = "http://localhost:8000"
     
     # Check health endpoint
     response = requests.get(f"{BASE_URL}/health")
