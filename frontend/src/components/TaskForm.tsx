@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Task, Priority } from '@/types';
 import { ValidationService } from '@/services/validation';
+import notificationService from '@/services/notificationService'; // NEW: import notification service
 
 interface TaskFormProps {
   onCreateTask: (taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'isCompleted'>) => void;
@@ -10,6 +11,7 @@ export const TaskForm = ({ onCreateTask }: TaskFormProps) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [scheduledDate, setScheduledDate] = useState<string>('');
+  const [dueDate, setDueDate] = useState<string>(''); // NEW: due date state
   const [priority, setPriority] = useState<Priority>('medium'); // Default to medium
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -31,17 +33,43 @@ export const TaskForm = ({ onCreateTask }: TaskFormProps) => {
     const selectedPriority = validPriorities.includes(priority) ? priority : 'medium';
 
     // Create the task
-    onCreateTask({
+    const taskData = {
       title,
       description: description || null,
       scheduledDate: scheduledDate ? new Date(scheduledDate) : null,
+      dueDate: dueDate ? new Date(dueDate) : null, // NEW: include due date
       priority: selectedPriority as Priority, // Ensure type safety
-    });
+    };
+
+    onCreateTask(taskData);
+
+    // NEW: Schedule a notification if due date is set
+    if (dueDate) {
+      const dueDateTime = new Date(dueDate);
+      const now = new Date();
+      const timeDiff = dueDateTime.getTime() - now.getTime();
+      
+      if (timeDiff > 0) {
+        // Schedule a notification for 15 minutes before due date (if it's more than 15 mins away)
+        const notificationTime = Math.max(timeDiff - 15 * 60 * 1000, 0);
+        
+        notificationService.scheduleNotification(
+          'Task Due Soon',
+          `Your task "${title}" is due soon.`,
+          notificationTime
+        ).then(() => {
+          console.log(`Notification scheduled for task: ${title}`);
+        }).catch(error => {
+          console.error('Error scheduling notification:', error);
+        });
+      }
+    }
 
     // Reset form
     setTitle('');
     setDescription('');
     setScheduledDate('');
+    setDueDate(''); // NEW: reset due date
   };
 
   return (
@@ -110,6 +138,19 @@ export const TaskForm = ({ onCreateTask }: TaskFormProps) => {
             id="scheduledDate"
             value={scheduledDate}
             onChange={(e) => setScheduledDate(e.target.value)}
+            className="w-full p-3 border border-gray-300 rounded-lg"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700 mb-1">
+            Due Date
+          </label>
+          <input
+            type="date"
+            id="dueDate"
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
             className="w-full p-3 border border-gray-300 rounded-lg"
           />
         </div>

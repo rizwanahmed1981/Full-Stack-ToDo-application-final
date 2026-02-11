@@ -31,7 +31,7 @@
   --color-ring: 215 20.2% 65.1%;
 
   --radius: 0.5rem;
-  
+
   /* Dark mode colors */
   --color-background-dark: 224 71% 4%;
   --color-foreground-dark: 213 31% 91%;
@@ -77,7 +77,7 @@
     --tw-color-destructive-foreground: var(--color-destructive-foreground);
     --tw-color-ring: var(--color-ring);
   }
-  
+
   .dark {
     color-scheme: dark;
     --tw-color-background: var(--color-background-dark);
@@ -100,9 +100,42 @@
     --tw-color-destructive-foreground: var(--color-destructive-foreground-dark);
     --tw-color-ring: var(--color-ring-dark);
   }
-  
+
   body {
     @apply bg-[--tw-color-background] text-[--tw-color-foreground];
     font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* Custom animation utilities */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .component {
+    border-width: 2px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in,
+  .animate-slide-in {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+  
+  .animate-pulse,
+  .animate-bounce,
+  .animate-spin,
+  .animate-ping {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }

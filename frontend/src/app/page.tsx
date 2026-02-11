@@ -46,6 +46,15 @@ export default function HomePage() {
       ) : (
         <CalendarView tasks={tasks} />
       )}
+
+      <div className="mt-8 text-center">
+        <a 
+          href="/dashboard" 
+          className="inline-block px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-200 font-medium"
+        >
+          Go to Dashboard
+        </a>
+      </div>
     </div>
   );
 }
