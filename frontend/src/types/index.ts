@@ -12,6 +12,14 @@ export interface Task {
   scheduledDate: Date | null;
 }
 
+export type SortField = 'title' | 'scheduledDate' | 'priority' | 'createdAt';
+export type SortDirection = 'asc' | 'desc';
+
+export interface SortCriteria {
+  sortBy: SortField;
+  direction: SortDirection;
+}
+
 export interface SearchQuery {
   keyword?: string;
   status?: StatusFilter;

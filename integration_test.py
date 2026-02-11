@@ -7,7 +7,7 @@ import requests
 import time
 
 # Configuration
-BASE_URL = "http://localhost:8000"
+BASE_URL = "http://localhost:8001"
 HEADERS = {"Content-Type": "application/json"}
 
 def test_api_endpoints():

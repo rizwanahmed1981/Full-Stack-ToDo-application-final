@@ -219,15 +219,53 @@ export const useTasks = () => {
     }
   };
 
+  const getAllTasksWithSorting = async (sortCriteria?: { sortBy?: string; sortDirection?: string }) => {
+    try {
+      setLoading(true);
+      const response = await ApiService.getTasks(sortCriteria);
+      if (!response.error) {
+        setTasks(response.data.tasks);
+        setError(null); // Reset error after successful operation
+      } else {
+        setError(response.error.message);
+      }
+    } catch (err: any) {
+      setError(err.message || 'An error occurred while fetching tasks');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Enhanced refreshTasks to support sorting
+  const refreshTasksWithSorting = async (sortCriteria?: { sortBy?: string; sortDirection?: string }) => {
+    try {
+      setLoading(true);
+      const response = await ApiService.getTasks(sortCriteria);
+      if (!response.error) {
+        setTasks(response.data.tasks);
+        await CacheService.setAllTasks(response.data.tasks);
+        setError(null); // Reset error after successful operation
+      } else {
+        setError(response.error.message);
+      }
+    } catch (err: any) {
+      setError(err.message || 'An error occurred while refreshing tasks');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     tasks,
     loading,
     error,
     refreshTasks,
+    refreshTasksWithSorting,
     createTask,
     updateTask,
     toggleTaskCompletion,
     deleteTask,
     searchTasks,
+    getAllTasksWithSorting,
   };
 };

@@ -12,14 +12,26 @@ export interface ApiResponse<T> {
 }
 
 export class ApiService {
-  static async getTasks(): Promise<ApiResponse<any>> {
+  static async getTasks(sortCriteria?: { sortBy?: string; sortDirection?: string }): Promise<ApiResponse<any>> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/tasks`);
+      // Build query parameters for sorting
+      const params = new URLSearchParams();
+      if (sortCriteria?.sortBy) {
+        params.append('sortBy', sortCriteria.sortBy);
+      }
+      if (sortCriteria?.sortDirection) {
+        params.append('sortDirection', sortCriteria.sortDirection);
+      }
+      
+      const queryString = params.toString();
+      const url = queryString ? `${API_BASE_URL}/api/v1/tasks?${queryString}` : `${API_BASE_URL}/api/v1/tasks`;
+      
+      const response = await fetch(url);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const rawData = await response.json();
-      
+
       // Transform the raw data to match frontend expectations
       const transformedData = {
         tasks: rawData.map((task: any) => ({
@@ -27,8 +39,8 @@ export class ApiService {
           // Convert snake_case to camelCase and string IDs to numbers
           id: Number(task.id),
           isCompleted: task.is_completed,  // Convert snake_case to camelCase
-          priority: task.priority && ['low', 'medium', 'high', 'critical'].includes(task.priority) 
-          ? task.priority 
+          priority: task.priority && ['low', 'medium', 'high', 'critical'].includes(task.priority)
+          ? task.priority
           : 'medium', // Default to medium if not provided or invalid
           createdAt: safeParseDate(task.created_at),  // Convert snake_case to camelCase
           // Use created_at as fallback for updatedAt if not present
@@ -37,7 +49,7 @@ export class ApiService {
           scheduledDate: task.scheduled_date ? safeParseDate(task.scheduled_date) : null
         }))
       };
-      
+
       return { data: transformedData };
     } catch (error: any) {
       return {

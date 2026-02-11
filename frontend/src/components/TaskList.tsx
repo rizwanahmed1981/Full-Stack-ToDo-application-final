@@ -2,17 +2,18 @@ import { useState } from 'react';
 import { TaskItem } from '@/components/TaskItem';
 import { TaskForm } from '@/components/TaskForm';
 import { SearchBar } from '@/components/SearchBar';
+import { SortControls } from '@/components/SortControls';
 import { useTasks } from '@/hooks/useTasks';
-import { Task } from '@/types';
+import { Task, SortCriteria } from '@/types';
 
 interface TaskListProps {}
 
 export const TaskList = ({}: TaskListProps = {}) => {
-  const { tasks, loading, error, createTask, updateTask, toggleTaskCompletion, deleteTask, searchTasks } = useTasks();
+  const { tasks, loading, error, createTask, updateTask, toggleTaskCompletion, deleteTask, searchTasks, refreshTasksWithSorting } = useTasks();
   const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
   const [priorityFilter, setPriorityFilter] = useState<'all' | 'low' | 'medium' | 'high' | 'critical'>('all');
-  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest' | 'priority'>('newest');
   const [searchResults, setSearchResults] = useState<Task[] | null>(null);
+  const [sortCriteria, setSortCriteria] = useState<SortCriteria>({ sortBy: 'createdAt', direction: 'desc' });
 
   if (loading) {
     return <div className="text-center py-10">Loading tasks...</div>;
@@ -37,6 +38,16 @@ export const TaskList = ({}: TaskListProps = {}) => {
     setSearchResults(null);
   };
 
+  // Handle sort changes
+  const handleSortChange = (criteria: SortCriteria) => {
+    setSortCriteria(criteria);
+    // Call the API to get sorted tasks
+    refreshTasksWithSorting({
+      sortBy: criteria.sortBy,
+      sortDirection: criteria.direction
+    });
+  };
+
   // Use search results if available, otherwise use all tasks
   const displayTasks = searchResults !== null ? searchResults : tasks;
 
@@ -52,16 +63,32 @@ export const TaskList = ({}: TaskListProps = {}) => {
     return true; // 'all' filter
   }) : displayTasks;
 
-  // Sort tasks based on selected sort order
+  // Sort tasks based on selected sort criteria
   const sortedTasks = [...filteredTasks].sort((a, b) => {
-    if (sortOrder === 'newest') {
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    } else if (sortOrder === 'oldest') {
-      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-    } else { // priority
-      const priorityOrder = { 'critical': 4, 'high': 3, 'medium': 2, 'low': 1 };
-      return priorityOrder[b.priority] - priorityOrder[a.priority];
+    let result = 0;
+
+    switch (sortCriteria.sortBy) {
+      case 'title':
+        result = a.title.localeCompare(b.title);
+        break;
+      case 'scheduledDate':
+        if (!a.scheduledDate && !b.scheduledDate) result = 0;
+        else if (!a.scheduledDate) result = 1; // No date goes last
+        else if (!b.scheduledDate) result = -1; // No date goes last
+        else result = new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime();
+        break;
+      case 'priority':
+        const priorityOrder = { 'critical': 4, 'high': 3, 'medium': 2, 'low': 1 };
+        result = priorityOrder[b.priority] - priorityOrder[a.priority];
+        break;
+      case 'createdAt':
+      default:
+        result = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        break;
     }
+
+    // Reverse the result if descending order is selected
+    return sortCriteria.direction === 'asc' ? result : -result;
   });
 
   const handleCreateTask = async (taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'isCompleted'>) => {
@@ -88,10 +115,14 @@ export const TaskList = ({}: TaskListProps = {}) => {
 
       <div className="mb-6">
         <SearchBar
-          tasks={hookTasks}
+          tasks={tasks}
           onSearchResults={handleSearchResults}
           onClear={handleClearSearch}
         />
+      </div>
+
+      <div className="mb-6">
+        <SortControls onSortChange={handleSortChange} />
       </div>
 
       <div className="mb-6 flex flex-wrap gap-4">
@@ -144,21 +175,6 @@ export const TaskList = ({}: TaskListProps = {}) => {
               <option value="medium">Medium Priority</option>
               <option value="high">High Priority</option>
               <option value="critical">Critical Priority</option>
-            </select>
-          </div>
-        )}
-
-        {/* Sort Order - only show if not using search results */}
-        {searchResults === null && (
-          <div className="flex space-x-2">
-            <select
-              value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value as any)}
-              className="p-2 border border-gray-300 rounded-lg"
-            >
-              <option value="newest">Newest First</option>
-              <option value="oldest">Oldest First</option>
-              <option value="priority">By Priority</option>
             </select>
           </div>
         )}

@@ -129,7 +129,7 @@ class TodoService:
             result = session.execute(statement)
             return result.scalar_one()
 
-    def search_tasks(self, search_query: SearchQuery) -> List[Task]:
+    def search_tasks(self, search_query: SearchQuery, sort_by: Optional[str] = None, sort_direction: Optional[str] = 'asc') -> List[Task]:
         """Search and filter tasks based on the provided search query."""
         with Session(self.engine) as session:
             statement = select(Task)
@@ -161,8 +161,61 @@ class TodoService:
             if search_query.end_date:
                 statement = statement.where(Task.scheduled_date <= search_query.end_date)
             
-            # Order by creation date (newest first)
-            statement = statement.order_by(Task.created_at.desc())
+            # Apply sorting
+            if sort_by:
+                # Determine the column to sort by
+                if sort_by == 'title':
+                    sort_column = Task.title
+                elif sort_by == 'scheduled_date':
+                    sort_column = Task.scheduled_date
+                elif sort_by == 'priority':
+                    sort_column = Task.priority
+                elif sort_by == 'created_at':
+                    sort_column = Task.created_at
+                else:
+                    # Default to created_at if unknown sort field
+                    sort_column = Task.created_at
+                
+                # Apply sort direction
+                if sort_direction and sort_direction.lower() == 'desc':
+                    statement = statement.order_by(sort_column.desc())
+                else:
+                    statement = statement.order_by(sort_column.asc())
+            else:
+                # Default ordering by creation date (newest first)
+                statement = statement.order_by(Task.created_at.desc())
+            
+            result = session.execute(statement)
+            return result.scalars().all()
+
+    def get_all_tasks_with_sorting(self, sort_by: Optional[str] = None, sort_direction: Optional[str] = 'asc') -> List[Task]:
+        """Get all tasks with optional sorting."""
+        with Session(self.engine) as session:
+            statement = select(Task)
+            
+            # Apply sorting
+            if sort_by:
+                # Determine the column to sort by
+                if sort_by == 'title':
+                    sort_column = Task.title
+                elif sort_by == 'scheduled_date':
+                    sort_column = Task.scheduled_date
+                elif sort_by == 'priority':
+                    sort_column = Task.priority
+                elif sort_by == 'created_at':
+                    sort_column = Task.created_at
+                else:
+                    # Default to created_at if unknown sort field
+                    sort_column = Task.created_at
+                
+                # Apply sort direction
+                if sort_direction and sort_direction.lower() == 'desc':
+                    statement = statement.order_by(sort_column.desc())
+                else:
+                    statement = statement.order_by(sort_column.asc())
+            else:
+                # Default ordering by creation date (newest first)
+                statement = statement.order_by(Task.created_at.desc())
             
             result = session.execute(statement)
             return result.scalars().all()

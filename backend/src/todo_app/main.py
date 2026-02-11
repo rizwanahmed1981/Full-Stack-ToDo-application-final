@@ -80,14 +80,43 @@ async def health_check():
         return {"status": "unhealthy", "database": "disconnected"}
 
 # API v1 routes
-@app.get("/api/v1/tasks", response_model=List[TaskPublic])
-async def read_tasks(
+@app.get("/api/v1/tasks/search")
+async def search_tasks(
+    q: str = None,
     status: str = None,
     priority: str = None,
     start_date: str = None,
     end_date: str = None
 ):
-    """Get all tasks with optional filtering."""
+    """Search and filter tasks based on various criteria."""
+    try:
+        # Create a SearchQuery object from the parameters
+        search_query = SearchQuery(
+            keyword=q,
+            status=status,
+            priority=priority,
+            start_date=start_date,
+            end_date=end_date
+        )
+
+        tasks = todo_service.search_tasks(search_query)
+        logger.info(f"Searched tasks with criteria: q='{q}', status='{status}', priority='{priority}', start_date='{start_date}', end_date='{end_date}'. Found {len(tasks)} tasks.")
+        return tasks
+    except Exception as e:
+        logger.error(f"Error searching tasks: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.get("/api/v1/tasks", response_model=List[TaskPublic])
+async def read_tasks(
+    status: str = None,
+    priority: str = None,
+    start_date: str = None,
+    end_date: str = None,
+    sort_by: str = None,
+    sort_direction: str = "asc"
+):
+    """Get all tasks with optional filtering and sorting."""
     try:
         # Create a SearchQuery object from the parameters
         search_query = SearchQuery(
@@ -96,10 +125,10 @@ async def read_tasks(
             start_date=start_date,
             end_date=end_date
         )
-        
-        # Use the search functionality which handles all filters
-        tasks = todo_service.search_tasks(search_query)
-        logger.info(f"Retrieved {len(tasks)} tasks with filters: status='{status}', priority='{priority}', start_date='{start_date}', end_date='{end_date}'")
+
+        # Use the search functionality which handles all filters and sorting
+        tasks = todo_service.search_tasks(search_query, sort_by=sort_by, sort_direction=sort_direction)
+        logger.info(f"Retrieved {len(tasks)} tasks with filters: status='{status}', priority='{priority}', start_date='{start_date}', end_date='{end_date}', sort_by='{sort_by}', sort_direction='{sort_direction}'")
         return tasks
     except Exception as e:
         logger.error(f"Error retrieving tasks: {str(e)}")
@@ -114,7 +143,7 @@ async def read_task(task_id: int):
         if not task:
             logger.warning(f"Task with ID {task_id} not found")
             raise HTTPException(status_code=404, detail="Task not found")
-        
+
         logger.info(f"Retrieved task with ID: {task_id}")
         return task
     except HTTPException:
@@ -191,32 +220,6 @@ async def delete_task(task_id: int):
         logger.error(f"Error deleting task with ID {task_id}: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-# Search and filter endpoints
-@app.get("/api/v1/tasks/search")
-async def search_tasks(
-    q: str = None,
-    status: str = None,
-    priority: str = None,
-    start_date: str = None,
-    end_date: str = None
-):
-    """Search and filter tasks based on various criteria."""
-    try:
-        # Create a SearchQuery object from the parameters
-        search_query = SearchQuery(
-            keyword=q,
-            status=status,
-            priority=priority,
-            start_date=start_date,
-            end_date=end_date
-        )
-        
-        tasks = todo_service.search_tasks(search_query)
-        logger.info(f"Searched tasks with criteria: q='{q}', status='{status}', priority='{priority}', start_date='{start_date}', end_date='{end_date}'. Found {len(tasks)} tasks.")
-        return tasks
-    except Exception as e:
-        logger.error(f"Error searching tasks: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
 
 if __name__ == "__main__":
     import uvicorn
