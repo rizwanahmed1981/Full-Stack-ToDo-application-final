@@ -21,12 +21,13 @@ try:
     print("✓ Service imported successfully")
     
     # Test creating a sample task object
+    from datetime import datetime
     sample_task = Task(
         title="Test",
         description="Test description",
         is_completed=False,
-        created_at=os.__import__('datetime').datetime.utcnow(),
-        updated_at=os.__import__('datetime').datetime.utcnow()
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow()
     )
     print("✓ Task object created successfully:", sample_task.title)
     

@@ -194,6 +194,31 @@ export const useTasks = () => {
     }
   };
 
+  const searchTasks = async (searchParams: {
+    q?: string;
+    status?: string;
+    priority?: string;
+    start_date?: string;
+    end_date?: string;
+  }) => {
+    try {
+      setLoading(true);
+      const response = await ApiService.searchTasks(searchParams);
+      if (!response.error) {
+        setError(null); // Reset error after successful operation
+        return response.data.tasks;
+      } else {
+        setError(response.error.message);
+        return [];
+      }
+    } catch (err: any) {
+      setError(err.message || 'An error occurred while searching tasks');
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     tasks,
     loading,
@@ -203,5 +228,6 @@ export const useTasks = () => {
     updateTask,
     toggleTaskCompletion,
     deleteTask,
+    searchTasks,
   };
 };

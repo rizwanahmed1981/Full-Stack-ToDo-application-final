@@ -13,7 +13,7 @@ import logging
 from dotenv import load_dotenv
 
 # Import models and services using absolute paths
-from todo_app.models.task import Task, TaskCreate, TaskUpdate, TaskPublic
+from todo_app.models.task import Task, TaskCreate, TaskUpdate, TaskPublic, SearchQuery
 from todo_app.services.todo_service import TodoService
 
 # Configure logging
@@ -81,14 +81,46 @@ async def health_check():
 
 # API v1 routes
 @app.get("/api/v1/tasks", response_model=List[TaskPublic])
-async def read_tasks():
-    """Get all tasks."""
+async def read_tasks(
+    status: str = None,
+    priority: str = None,
+    start_date: str = None,
+    end_date: str = None
+):
+    """Get all tasks with optional filtering."""
     try:
-        tasks = todo_service.get_all_tasks()
-        logger.info(f"Retrieved {len(tasks)} tasks")
+        # Create a SearchQuery object from the parameters
+        search_query = SearchQuery(
+            status=status,
+            priority=priority,
+            start_date=start_date,
+            end_date=end_date
+        )
+        
+        # Use the search functionality which handles all filters
+        tasks = todo_service.search_tasks(search_query)
+        logger.info(f"Retrieved {len(tasks)} tasks with filters: status='{status}', priority='{priority}', start_date='{start_date}', end_date='{end_date}'")
         return tasks
     except Exception as e:
         logger.error(f"Error retrieving tasks: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.get("/api/v1/tasks/{task_id}", response_model=TaskPublic)
+async def read_task(task_id: int):
+    """Get a specific task by ID."""
+    try:
+        task = todo_service.get_task(task_id)
+        if not task:
+            logger.warning(f"Task with ID {task_id} not found")
+            raise HTTPException(status_code=404, detail="Task not found")
+        
+        logger.info(f"Retrieved task with ID: {task_id}")
+        return task
+    except HTTPException:
+        raise  # Re-raise HTTP exceptions
+    except Exception as e:
+        logger.error(f"Error retrieving task with ID {task_id}: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @app.post("/api/v1/tasks", response_model=TaskPublic)
@@ -150,13 +182,40 @@ async def delete_task(task_id: int):
         if not success:
             logger.warning(f"Attempt to delete non-existent task with ID: {task_id}")
             raise HTTPException(status_code=404, detail="Task not found")
-        
+
         logger.info(f"Deleted task with ID: {task_id}")
         return {"message": "Task deleted successfully"}
     except HTTPException:
         raise  # Re-raise HTTP exceptions
     except Exception as e:
         logger.error(f"Error deleting task with ID {task_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+# Search and filter endpoints
+@app.get("/api/v1/tasks/search")
+async def search_tasks(
+    q: str = None,
+    status: str = None,
+    priority: str = None,
+    start_date: str = None,
+    end_date: str = None
+):
+    """Search and filter tasks based on various criteria."""
+    try:
+        # Create a SearchQuery object from the parameters
+        search_query = SearchQuery(
+            keyword=q,
+            status=status,
+            priority=priority,
+            start_date=start_date,
+            end_date=end_date
+        )
+        
+        tasks = todo_service.search_tasks(search_query)
+        logger.info(f"Searched tasks with criteria: q='{q}', status='{status}', priority='{priority}', start_date='{start_date}', end_date='{end_date}'. Found {len(tasks)} tasks.")
+        return tasks
+    except Exception as e:
+        logger.error(f"Error searching tasks: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 if __name__ == "__main__":

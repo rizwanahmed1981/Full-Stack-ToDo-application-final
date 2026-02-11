@@ -1,4 +1,5 @@
 export type Priority = 'low' | 'medium' | 'high' | 'critical';
+export type StatusFilter = 'all' | 'active' | 'completed';
 
 export interface Task {
   id: number;  // Backend returns integer IDs
@@ -9,6 +10,20 @@ export interface Task {
   createdAt: Date;
   updatedAt: Date;
   scheduledDate: Date | null;
+}
+
+export interface SearchQuery {
+  keyword?: string;
+  status?: StatusFilter;
+  priority?: Priority | 'all';
+  startDate?: Date;
+  endDate?: Date;
+}
+
+export interface FilterCriteria {
+  status: StatusFilter;
+  priority: Priority | 'all';
+  dateRange?: { startDate: Date | null; endDate: Date | null };
 }
 
 export interface TaskList {

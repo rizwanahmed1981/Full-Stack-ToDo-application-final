@@ -9,15 +9,19 @@ A REST API-based todo application with PostgreSQL backend for persistent storage
 - Persistent storage with PostgreSQL
 - RESTful API design
 - Full CRUD operations
+- Search tasks by keyword in title and description
+- Filter tasks by status (active/completed), priority (low, medium, high, critical), or date range
+- Combined search and filter functionality
 
 ## API Endpoints
 
 - `POST /api/v1/tasks/` - Create a new task
-- `GET /api/v1/tasks/` - Retrieve all tasks
+- `GET /api/v1/tasks/` - Retrieve all tasks (with optional filtering)
 - `GET /api/v1/tasks/{id}` - Retrieve a specific task
 - `PUT /api/v1/tasks/{id}` - Update a task's details
 - `PATCH /api/v1/tasks/{id}` - Toggle task completion status
 - `DELETE /api/v1/tasks/{id}` - Delete a task
+- `GET /api/v1/tasks/search` - Search and filter tasks by keyword, status, priority, or date range
 
 ## Getting Started
 
@@ -90,6 +94,24 @@ curl -X PATCH "http://localhost:8000/api/v1/tasks/1" \
 ### Delete a Task
 ```bash
 curl -X DELETE "http://localhost:8000/api/v1/tasks/1"
+```
+
+### Search and Filter Tasks
+```bash
+# Search tasks by keyword
+curl -X GET "http://localhost:8000/api/v1/tasks/search?q=meeting"
+
+# Filter tasks by status
+curl -X GET "http://localhost:8000/api/v1/tasks/search?status=active"
+
+# Filter tasks by priority
+curl -X GET "http://localhost:8000/api/v1/tasks/search?priority=high"
+
+# Filter tasks by date range
+curl -X GET "http://localhost:8000/api/v1/tasks/search?start_date=2026-01-01&end_date=2026-12-31"
+
+# Combine search and filters
+curl -X GET "http://localhost:8000/api/v1/tasks/search?q=project&status=active&priority=high"
 ```
 
 ## Testing
